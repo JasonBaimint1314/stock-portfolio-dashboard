@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1220"><title>Stock Portfolio Dashboard</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#121c2e;--panel2:#17243a;--line:#263650;--muted:#91a2bb;--text:#edf3fc;--green:#36c98f;--red:#ff7185;--blue:#78aaff;--gold:#f5c66b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% -10%,#1d3150 0,transparent 35%),var(--bg);color:var(--text);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1180px;margin:auto;padding:30px 22px 60px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}.eyebrow{color:var(--blue);font-size:12px;letter-spacing:.13em;text-transform:uppercase;font-weight:700}.title{font-size:clamp(25px,4vw,36px);font-weight:800;letter-spacing:-.04em;margin:5px 0}.sub,.muted{color:var(--muted)}.actions{display:flex;gap:9px;flex-wrap:wrap}button{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:10px 14px;font-weight:650;cursor:pointer}button.primary{background:#316bd6;border-color:#316bd6}button:hover{filter:brightness(1.13)}
+.notice{margin:22px 0;background:#2b2618;border:1px solid #62502a;color:#f4d99c;padding:12px 15px;border-radius:12px;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:18px 0}.card,.section{background:linear-gradient(145deg,#152238,#101a2b);border:1px solid var(--line);border-radius:16px}.card{padding:17px}.label{font-size:12px;color:var(--muted)}.value{font-size:25px;font-weight:800;margin-top:5px;letter-spacing:-.03em}.positive{color:var(--green)}.negative{color:var(--red)}.section{padding:18px;margin-top:16px}.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}.section h2{font-size:17px;margin:0}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:780px}th,td{text-align:right;padding:13px 10px;border-bottom:1px solid var(--line);white-space:nowrap}th{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em}th:first-child,td:first-child{text-align:left}.ticker{font-weight:800}.company{font-size:11px;color:var(--muted)}input{width:105px;background:#0b1423;color:var(--text);border:1px solid #344761;border-radius:8px;padding:8px;text-align:right;font:inherit}input:focus{outline:2px solid #5489e8;border-color:transparent}.chartbox{height:250px;position:relative}.chartbox svg{width:100%;height:100%;overflow:visible}.empty{display:grid;place-items:center;height:100%;color:var(--muted);text-align:center}.foot{font-size:12px;color:var(--muted);margin-top:15px}.pill{display:inline-block;border-radius:99px;padding:3px 8px;font-size:11px;background:#20334e;color:#a9c8ff}.smallbtn{padding:6px 9px;font-size:12px}.two{display:grid;grid-template-columns:1.3fr 1fr;gap:14px}.legend{display:flex;gap:16px;font-size:12px;color:var(--muted)}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:var(--blue)}
+@media(max-width:850px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}}@media(max-width:480px){main{padding:22px 13px}.grid{gap:8px}.card{padding:13px}.value{font-size:20px}.section{padding:13px}}
+</style></head>
+<body><main>
+<header class="top"><div><div class="eyebrow">Personal investing · Thailand</div><h1 class="title">Stock Portfolio</h1><div class="sub">พอร์ตหุ้นไทยของคุณ · สกุลเงิน THB</div></div><div class="actions"><button id="exportBtn">Export CSV</button><button id="resetBtn">Reset prices</button></div></header>
+<div class="notice">ข้อมูลราคาปัจจุบันเป็นช่องกรอกเอง ยังไม่ได้เชื่อมต่อแหล่งราคาตลาดแบบเรียลไทม์ กรุณาอัปเดตราคาจากโบรกเกอร์ก่อนใช้ตัดสินใจลงทุน ข้อมูลจะบันทึกไว้ในเบราว์เซอร์เครื่องนี้อัตโนมัติ</div>
+<section class="grid">
+<div class="card"><div class="label">มูลค่าพอร์ตปัจจุบัน</div><div class="value" id="marketValue">฿0.00</div></div>
+<div class="card"><div class="label">ต้นทุนรวม</div><div class="value" id="costValue">฿0.00</div></div>
+<div class="card"><div class="label">กำไร / ขาดทุน</div><div class="value" id="pnlValue">฿0.00</div><div class="label" id="pnlPct">0.00%</div></div>
+<div class="card"><div class="label">จำนวนหุ้นในพอร์ต</div><div class="value" id="holdingCount">0</div><div class="label">รายการที่มีจำนวนหุ้นมากกว่า 0</div></div>
+</section>
+<section class="section"><div class="section-head"><h2>My holdings</h2><span class="pill">6 Thai stocks · SET</span></div><div class="table-wrap"><table><thead><tr><th>หุ้น</th><th>จำนวน (หุ้น)</th><th>ต้นทุน/หุ้น</th><th>ราคาล่าสุด</th><th>มูลค่าตลาด</th><th>กำไร/ขาดทุน</th><th>%</th></tr></thead><tbody id="holdings"></tbody></table></div><div class="foot">กรอกจำนวนหุ้นและราคาล่าสุดเพื่อคำนวณมูลค่าพอร์ต · ต้นทุนเฉลี่ยตั้งต้นมาจากข้อมูลที่คุณเคยให้ไว้</div></section>
+<div class="two"><section class="section"><div class="section-head"><h2>Portfolio performance</h2><button class="smallbtn" id="snapshotBtn">Save snapshot</button></div><div class="chartbox" id="chart"><div class="empty">กรอกจำนวนหุ้นและราคาล่าสุด แล้วกด Save snapshot<br>เพื่อเริ่มเก็บประวัติพอร์ต</div></div><div class="legend"><span><i class="dot"></i>มูลค่าพอร์ต</span></div></section>
+<section class="section"><div class="section-head"><h2>Allocation</h2></div><div id="allocation" class="chartbox"><div class="empty">กรอกจำนวนหุ้นเพื่อดูสัดส่วนการลงทุน</div></div></section></div>
+<div class="foot">หมายเหตุ: Dashboard นี้เป็นเครื่องมือติดตามพอร์ตส่วนบุคคล ไม่ใช่คำแนะนำการลงทุน และไม่ส่งข้อมูลออกจากเบราว์เซอร์</div>
+</main>
+<script>
+const defaults=[
+ {symbol:"SCB",name:"SCB X",cost:140.65,qty:0,price:0},
+ {symbol:"PTT",name:"PTT",cost:41.44,qty:0,price:0},
+ {symbol:"GULF",name:"GULF",cost:59.35,qty:0,price:0},
+ {symbol:"TTB",name:"TMBThanachart",cost:2.96,qty:0,price:0},
+ {symbol:"CPALL",name:"CP ALL",cost:44.82,qty:0,price:0},
+ {symbol:"OSP",name:"Osotspa",cost:16.12,qty:0,price:0}
+];
+let stocks=JSON.parse(localStorage.getItem("thaiPortfolioStocks")||"null")||defaults;
+let snapshots=JSON.parse(localStorage.getItem("thaiPortfolioSnapshots")||"[]");
+const money=n=>"฿"+Number(n||0).toLocaleString("th-TH",{minimumFractionDigits:2,maximumFractionDigits:2});
+const num=n=>Number(n||0).toLocaleString("th-TH",{maximumFractionDigits:2});
+function save(){localStorage.setItem("thaiPortfolioStocks",JSON.stringify(stocks));localStorage.setItem("thaiPortfolioSnapshots",JSON.stringify(snapshots))}
+function render(){
+ const body=document.getElementById("holdings");body.innerHTML="";
+ let market=0,cost=0,qty=0,active=0;
+ stocks.forEach((s,i)=>{const value=s.qty*s.price,invested=s.qty*s.cost,pnl=value-invested,pct=invested?pnl/invested*100:0;market+=value;cost+=invested;qty+=s.qty;if(s.qty>0)active++;
+ const tr=document.createElement("tr");tr.innerHTML=`<td><span class="ticker">${s.symbol}</span><div class="company">${s.name}</div></td><td><input type="number" min="0" step="1" data-i="${i}" data-k="qty" value="${s.qty}" aria-label="จำนวนหุ้น ${s.symbol}"></td><td>${money(s.cost)}</td><td><input type="number" min="0" step="0.01" data-i="${i}" data-k="price" value="${s.price||""}" placeholder="กรอกราคา" aria-label="ราคาล่าสุด ${s.symbol}"></td><td>${money(value)}</td><td class="${pnl>=0?"positive":"negative"}">${money(pnl)}</td><td class="${pnl>=0?"positive":"negative"}">${pct.toFixed(2)}%</td>`;
+ body.appendChild(tr)});
+ document.getElementById("marketValue").textContent=money(market);document.getElementById("costValue").textContent=money(cost);
+ const p=market-cost,pct=cost?p/cost*100:0;const el=document.getElementById("pnlValue");el.textContent=money(p);el.className="value "+(p>=0?"positive":"negative");
+ document.getElementById("pnlPct").textContent=pct.toFixed(2)+"%";document.getElementById("pnlPct").className="label "+(p>=0?"positive":"negative");document.getElementById("holdingCount").textContent=num(active)+" / 6";
+ body.querySelectorAll("input").forEach(input=>input.addEventListener("change",e=>{const i=+e.target.dataset.i,k=e.target.dataset.k;stocks[i][k]=Math.max(0,Number(e.target.value)||0);save();render()}));
+ renderAllocation();renderChart();
+}
+function renderAllocation(){const active=stocks.filter(s=>s.qty*s.price>0),total=active.reduce((a,s)=>a+s.qty*s.price,0),box=document.getElementById("allocation");if(!total){box.innerHTML='<div class="empty">กรอกจำนวนหุ้นและราคาล่าสุด<br>เพื่อดูสัดส่วนการลงทุน</div>';return}
+ let angle=0;const colors=["#78aaff","#36c98f","#f5c66b","#bd91ff","#ff8d9d","#55c7d4"];const paths=active.map((s,i)=>{const part=s.qty*s.price/total*100,start=angle;angle+=part/100*360;return `<div style="display:flex;justify-content:space-between;gap:8px;margin:7px 0;font-size:12px"><span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colors[i]};margin-right:6px"></i>${s.symbol}</span><b>${part.toFixed(1)}%</b></div>`}).join("");let a=0,stops=active.map((s,i)=>{const p=s.qty*s.price/total*100,from=a;a+=p;return `${colors[i]} ${from}% ${a}%`}).join(",");box.innerHTML=`<div style="display:flex;align-items:center;gap:18px;height:100%;justify-content:center;flex-wrap:wrap"><div style="width:145px;height:145px;border-radius:50%;background:conic-gradient(${stops});display:grid;place-items:center"><div style="background:#121c2e;border-radius:50%;width:88px;height:88px;display:grid;place-items:center;font-weight:800;font-size:13px">${money(total)}</div></div><div style="min-width:130px">${paths}</div></div>`}
+function renderChart(){const box=document.getElementById("chart");if(snapshots.length<2){box.innerHTML='<div class="empty">บันทึก Snapshot อย่างน้อย 2 ครั้ง<br>เพื่อดูกราฟมูลค่าพอร์ตย้อนหลัง</div>';return}const vals=snapshots.map(x=>x.value),min=Math.min(...vals)*.96,max=Math.max(...vals)*1.04||1,w=700,h=220,pts=vals.map((v,i)=>[i/(vals.length-1)*w,h-(v-min)/(max-min||1)*(h-30)-10]),line=pts.map(p=>p.join(",")).join(" ");box.innerHTML=`<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><line x1="0" y1="190" x2="700" y2="190" stroke="#34445c"/><polyline points="${line}" fill="none" stroke="#78aaff" stroke-width="3" vector-effect="non-scaling-stroke"/>${pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="#78aaff"/>`).join("")}<text x="4" y="15" fill="#91a2bb" font-size="11">${money(max)}</text><text x="4" y="210" fill="#91a2bb" font-size="11">${money(min)}</text></svg>`}
+document.getElementById("snapshotBtn").addEventListener("click",()=>{const value=stocks.reduce((a,s)=>a+s.qty*s.price,0);if(!stocks.some(s=>s.qty>0&&s.price>0)){alert("กรุณากรอกจำนวนหุ้นและราคาล่าสุดก่อนค่ะ");return}snapshots.push({date:new Date().toISOString(),value});if(snapshots.length>60)snapshots=snapshots.slice(-60);save();renderChart();alert("บันทึก Snapshot แล้ว")});
+document.getElementById("resetBtn").addEventListener("click",()=>{if(!confirm("ล้างจำนวนหุ้นและราคาล่าสุดทั้งหมดหรือไม่? ต้นทุนเฉลี่ยจะยังคงเดิม"))return;stocks=stocks.map(s=>({...s,qty:0,price:0}));save();render()});
+document.getElementById("exportBtn").addEventListener("click",()=>{const rows=[["Symbol","Name","Shares","Cost per share","Latest price","Market value","P/L"],...stocks.map(s=>[s.symbol,s.name,s.qty,s.cost,s.price,s.qty*s.price,s.qty*(s.price-s.cost)])];const csv="\uFEFF"+rows.map(r=>r.join(",")).join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="thai-stock-portfolio.csv";a.click();URL.revokeObjectURL(a.href)});
+render();
+</script></body></html>
