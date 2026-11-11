@@ -23,6 +23,7 @@ button{border:1px solid var(--line);background:#20324c;color:var(--text);padding
 <div class="card"><div class="label">ชั่วโมง OT</div><div class="value" id="otTotal">0.00</div></div>
 <div class="card"><div class="label">ชั่วโมงรวม</div><div class="value" id="allTotal">0.00</div></div>
 </section>
+<section class="panel"><h2>ลงเวลาวันนี้แบบรวดเร็ว</h2><p class="hint small">กดปุ่มเพื่อบันทึกเวลาปัจจุบันลงในรายการของวันนี้โดยอัตโนมัติ</p><div class="formactions"><button class="primary" type="button" id="clockInNow">⏱ Clock In — เข้างาน</button><button type="button" id="clockOutNow">🏁 Clock Out — เลิกงาน</button><span class="tag" id="liveClock">--:--:--</span></div></section>
 <section class="panel"><h2 id="formTitle">เพิ่มรายการลงเวลา</h2>
 <form id="entryForm">
 <div class="formgrid">
@@ -52,6 +53,20 @@ function duration(a,b){if(a==null||b==null)return 0;let d=b-a;if(d<0)d+=1440;ret
 function hours(m){return (m/60).toFixed(2)}
 function calc(r){const span=duration(mins(r.clockIn),mins(r.clockOut));const work=Math.max(0,span-(Number(r.breakMin)||0));const ot=duration(mins(r.otStart),mins(r.otEnd));return {work,ot,total:work+ot}}
 function save(){localStorage.setItem(key,JSON.stringify(records))}
+function nowTime(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+function punch(field){
+ const d=today(), t=nowTime();
+ let r=records.find(x=>x.date===d);
+ if(!r){r={id:String(Date.now()),date:d,clockIn:'',clockOut:'',breakMin:0,otStart:'',otEnd:'',note:''};records.push(r)}
+ if(r[field]&&!confirm('วันนี้มีเวลา'+(field==='clockIn'?'เข้างาน':'ออกงาน')+' '+r[field]+' อยู่แล้ว ต้องการแทนที่ด้วย '+t+' หรือไม่?'))return;
+ r[field]=t;save();$('month').value=d.slice(0,7);render();
+ if(editing===r.id){$(field).value=t}else if($('date').value===d){$(field).value=t}
+ alert((field==='clockIn'?'บันทึกเวลาเข้างาน ':'บันทึกเวลาออกงาน ')+t+' เรียบร้อยแล้ว');
+}
+$('clockInNow').addEventListener('click',()=>punch('clockIn'));
+$('clockOutNow').addEventListener('click',()=>punch('clockOut'));
+function tickClock(){$('liveClock').textContent=nowTime()+':'+String(new Date().getSeconds()).padStart(2,'0')}
+tickClock();setInterval(tickClock,1000);
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function render(){
  const selected=$('month').value||monthNow(), list=records.filter(r=>r.date.startsWith(selected)).sort((a,b)=>b.date.localeCompare(a.date));
