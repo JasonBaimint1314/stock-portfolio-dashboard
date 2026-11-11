@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101827"><title>Expense Analytics</title>
+<style>
+:root{color-scheme:dark;--bg:#101827;--panel:#182438;--line:#30415b;--text:#f3f6fb;--muted:#a5b2c5;--accent:#82aaff;--green:#51d6a2;--red:#ff8796}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:1000px;margin:auto;padding:24px 16px 56px}h1{margin:0;font-size:clamp(25px,5vw,36px)}h2{font-size:18px;margin:0 0 14px}.muted,.hint{color:var(--muted)}.hint{font-size:12px}.panel,.stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:17px;margin-top:16px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}.stat{margin:0;padding:14px}.stat b{display:block;font-size:22px;margin-top:4px}.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}label{display:block;font-size:13px;color:var(--muted)}input,select,textarea{width:100%;margin-top:5px;background:#101a2a;border:1px solid var(--line);border-radius:9px;color:var(--text);padding:11px;font:inherit}button{background:#294b80;color:white;border:0;border-radius:10px;padding:11px 15px;font:inherit;font-weight:650;cursor:pointer}button.secondary{background:#26364e}button.danger{background:#633340}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.full{grid-column:1/-1}.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.filters label{flex:1;min-width:130px}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:650px}th,td{text-align:left;padding:11px 8px;border-bottom:1px solid var(--line);font-size:13px}th{color:var(--muted)}td.amount{text-align:right;font-variant-numeric:tabular-nums}.tag{display:inline-block;border-radius:20px;padding:3px 8px;background:#293c58;font-size:11px}.empty{text-align:center;padding:25px;color:var(--muted)}.good{color:var(--green)}@media(max-width:600px){main{padding:18px 12px 40px}.stats{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}.full{grid-column:auto}}
+</style></head>
+<body><main>
+<header><div class="hint">PERSONAL + BUSINESS · VERSION 1</div><h1>Expense Analytics</h1><div class="muted">บันทึกค่าใช้จ่ายและดูสรุปในที่เดียว</div></header>
+<section class="stats">
+<div class="stat"><span class="hint">ค่าใช้จ่ายเดือนนี้</span><b id="monthTotal">฿0.00</b></div>
+<div class="stat"><span class="hint">ค่าใช้จ่ายวันนี้</span><b id="todayTotal">฿0.00</b></div>
+<div class="stat"><span class="hint">จำนวนรายการทั้งหมด</span><b id="countTotal">0</b></div>
+</section>
+<section class="panel"><h2>เพิ่มรายการค่าใช้จ่าย</h2>
+<form id="expenseForm"><div class="formgrid">
+<label>ประเภทข้อมูล<select id="scope"><option value="personal">ส่วนตัว</option><option value="business">ธุรกิจ</option></select></label>
+<label>วันที่<input id="date" type="date" required></label>
+<label>จำนวนเงิน (บาท)<input id="amount" type="number" min="0.01" step="0.01" placeholder="เช่น 120" required></label>
+<label>หมวดหมู่<select id="category"><option>อาหาร</option><option>เดินทาง</option><option>ที่พัก</option><option>ค่าน้ำ/ไฟ/โทรศัพท์</option><option>ซื้อของ</option><option>สุขภาพ</option><option>อุปกรณ์/วัตถุดิบ</option><option>เงินเดือน/ค่าจ้าง</option><option>การตลาด</option><option>อื่น ๆ</option></select></label>
+<label>วิธีชำระเงิน<select id="payment"><option>เงินสด</option><option>โอนเงิน</option><option>บัตรเดบิต</option><option>บัตรเครดิต</option><option>อื่น ๆ</option></select></label>
+<label>รายละเอียด<input id="note" maxlength="120" placeholder="เช่น กาแฟ / ค่าน้ำมัน"></label>
+</div><div class="actions"><button type="submit">บันทึกค่าใช้จ่าย</button><button type="reset" class="secondary">ล้างแบบฟอร์ม</button></div></form>
+<p class="hint">Version 1 เก็บข้อมูลในเบราว์เซอร์เครื่องนี้เท่านั้น ควร Export CSV สำรองข้อมูลเป็นระยะ</p></section>
+<section class="panel"><h2>รายการและสรุปตามช่วงเวลา</h2>
+<div class="filters">
+<label>ประเภท<select id="filterScope"><option value="all">ทั้งหมด</option><option value="personal">ส่วนตัว</option><option value="business">ธุรกิจ</option></select></label>
+<label>ตั้งแต่วันที่<input id="fromDate" type="date"></label>
+<label>ถึงวันที่<input id="toDate" type="date"></label>
+<div class="actions"><button id="filterBtn" type="button">ดูสรุป</button><button id="clearFilter" type="button" class="secondary">ล้างตัวกรอง</button></div>
+</div>
+<div class="stats"><div class="stat"><span class="hint">ยอดรวมที่เลือก</span><b id="filteredTotal">฿0.00</b></div><div class="stat"><span class="hint">ส่วนตัว</span><b id="personalTotal">฿0.00</b></div><div class="stat"><span class="hint">ธุรกิจ</span><b id="businessTotal">฿0.00</b></div></div>
+<div class="actions"><button id="exportBtn" type="button" class="secondary">Export CSV</button></div>
+<div class="tablewrap"><table><thead><tr><th>วันที่</th><th>ประเภท</th><th>หมวดหมู่</th><th>รายละเอียด</th><th>วิธีจ่าย</th><th style="text-align:right">จำนวนเงิน</th><th>จัดการ</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div id="empty" class="empty">ยังไม่มีรายการ เริ่มบันทึกค่าใช้จ่ายรายการแรกได้เลย</div>
+</section>
+<footer class="hint" style="margin-top:18px">Expense Analytics V1 · ใช้เพื่อบันทึกและติดตามค่าใช้จ่าย ไม่ใช่คำแนะนำทางการเงิน</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id),key='expenseAnalyticsV1';
+let expenses=JSON.parse(localStorage.getItem(key)||'[]');
+const today=new Date().toLocaleDateString('en-CA');
+$('date').value=today;
+const money=n=>'฿'+Number(n||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+const save=()=>localStorage.setItem(key,JSON.stringify(expenses));
+$('expenseForm').addEventListener('submit',e=>{e.preventDefault();const amount=Number($('amount').value);if(!Number.isFinite(amount)||amount<=0)return;expenses.push({id:Date.now().toString(),scope:$('scope').value,date:$('date').value,amount,category:$('category').value,payment:$('payment').value,note:$('note').value.trim()});save();$('amount').value='';$('note').value='';render();});
+function filtered(){return expenses.filter(x=>($('filterScope').value==='all'||x.scope===$('filterScope').value)&&(!$('fromDate').value||x.date>=$('fromDate').value)&&(!$('toDate').value||x.date<=$('toDate').value)).sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id))}
+function sum(list){return list.reduce((a,x)=>a+x.amount,0)}
+function render(){const month=today.slice(0,7),todays=expenses.filter(x=>x.date===today),months=expenses.filter(x=>x.date.startsWith(month));$('monthTotal').textContent=money(sum(months));$('todayTotal').textContent=money(sum(todays));$('countTotal').textContent=expenses.length.toLocaleString('th-TH');const list=filtered();$('filteredTotal').textContent=money(sum(list));$('personalTotal').textContent=money(sum(list.filter(x=>x.scope==='personal')));$('businessTotal').textContent=money(sum(list.filter(x=>x.scope==='business')));$('rows').innerHTML='';$('empty').style.display=list.length?'none':'block';list.forEach(x=>{const tr=document.createElement('tr');const cells=[x.date,x.scope==='personal'?'ส่วนตัว':'ธุรกิจ',x.category,x.note||'-',x.payment];cells.forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td)});const amt=document.createElement('td');amt.className='amount';amt.textContent=money(x.amount);tr.appendChild(amt);const action=document.createElement('td');const del=document.createElement('button');del.className='danger';del.textContent='ลบ';del.type='button';del.addEventListener('click',()=>{if(confirm('ลบรายการนี้ใช่ไหม?')){expenses=expenses.filter(y=>y.id!==x.id);save();render()}});action.appendChild(del);tr.appendChild(action);$('rows').appendChild(tr)})}
+$('filterBtn').addEventListener('click',render);$('clearFilter').addEventListener('click',()=>{$('filterScope').value='all';$('fromDate').value='';$('toDate').value='';render()});
+$('exportBtn').addEventListener('click',()=>{const rows=[['Date','Scope','Category','Note','Payment','Amount'],...filtered().map(x=>[x.date,x.scope,x.category,x.note,x.payment,x.amount])];const csv='\\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='expenses-'+today+'.csv';a.click();URL.revokeObjectURL(a.href)});
+render();
+</script></body></html>
