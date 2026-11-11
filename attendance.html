@@ -16,7 +16,7 @@ button{border:1px solid var(--line);background:#20324c;color:var(--text);padding
 </style></head>
 <body><main>
 <header class="head"><div><div class="eyebrow">Personal work log</div><h1>Attendance & OT Tracker</h1><div class="muted">บันทึกเวลาเข้า–ออกงาน และล่วงเวลา</div></div><div class="actions"><button id="export">Export CSV</button><button id="clearMonth" class="danger">ล้างข้อมูลเดือนนี้</button></div></header>
-<div class="notice">ข้อมูลบันทึกไว้ในเบราว์เซอร์ของอุปกรณ์นี้เท่านั้น แนะนำ Export CSV สำรองข้อมูลเป็นประจำ และยังไม่ซิงก์ข้ามอุปกรณ์</div>
+<div class="notice">ไม่มีการกำหนดเวลาเข้างานหรือเลิกงานตายตัว กรอกเวลาเข้า–ออกและเวลาพักจริงแยกเป็นรายวันได้ตามตารางงานของวันนั้น ข้อมูลบันทึกไว้ในเบราว์เซอร์เครื่องนี้เท่านั้น แนะนำ Export CSV สำรองข้อมูลเป็นประจำ</div>
 <section class="grid">
 <div class="card"><div class="label">วันทำงานที่บันทึก (เดือนนี้)</div><div class="value" id="days">0</div></div>
 <div class="card"><div class="label">ชั่วโมงทำงานสุทธิ</div><div class="value" id="workTotal">0.00</div></div>
@@ -29,7 +29,7 @@ button{border:1px solid var(--line);background:#20324c;color:var(--text);padding
 <div><label for="date">วันที่</label><input id="date" type="date" required></div>
 <div><label for="clockIn">เวลาเข้างาน</label><input id="clockIn" type="time"></div>
 <div><label for="clockOut">เวลาออกงาน</label><input id="clockOut" type="time"></div>
-<div><label for="breakMin">พัก (นาที)</label><input id="breakMin" type="number" min="0" step="5" value="60"></div>
+<div><label for="breakMin">พัก (นาที)</label><input id="breakMin" type="number" min="0" step="5" value="0"></div>
 <div><label for="otStart">เริ่ม OT</label><input id="otStart" type="time"></div>
 <div><label for="otEnd">สิ้นสุด OT</label><input id="otEnd" type="time"></div>
 <div class="wide"><label for="note">หมายเหตุ</label><textarea id="note" placeholder="เช่น ทำงานนอกสถานที่ / ลากิจ / หมายเหตุเพิ่มเติม"></textarea></div>
@@ -60,7 +60,7 @@ function render(){
  $('rows').innerHTML=list.map(r=>{const c=calc(r);const i=records.findIndex(x=>x.id===r.id);return '<tr><td>'+r.date+'</td><td>'+(r.clockIn||'—')+'</td><td>'+(r.clockOut||'—')+'</td><td class="num">'+(Number(r.breakMin)||0)+'</td><td class="num">'+hours(c.work)+'</td><td class="num">'+hours(c.ot)+'</td><td class="num"><b>'+hours(c.total)+'</b></td><td>'+escapeHtml(r.note)+'</td><td><button class="small" onclick="editRecord(\''+r.id+'\')">แก้ไข</button> <button class="small danger" onclick="deleteRecord(\''+r.id+'\')">ลบ</button></td></tr>'}).join('');
  $('empty').hidden=list.length>0;
 }
-function resetForm(){editing=null;$('entryForm').reset();$('date').value=today();$('breakMin').value=60;$('formTitle').textContent='เพิ่มรายการลงเวลา';$('saveBtn').textContent='บันทึกเวลา';$('cancelEdit').hidden=true}
+function resetForm(){editing=null;$('entryForm').reset();$('date').value=today();$('breakMin').value=0;$('formTitle').textContent='เพิ่มรายการลงเวลา';$('saveBtn').textContent='บันทึกเวลา';$('cancelEdit').hidden=true}
 $('entryForm').addEventListener('submit',e=>{e.preventDefault();const r={id:editing||String(Date.now()),date:$('date').value,clockIn:$('clockIn').value,clockOut:$('clockOut').value,breakMin:Number($('breakMin').value)||0,otStart:$('otStart').value,otEnd:$('otEnd').value,note:$('note').value.trim()};if(!r.date){alert('กรุณาเลือกวันที่');return}if((r.clockIn&&!r.clockOut)||(!r.clockIn&&r.clockOut)){if(!confirm('มีเวลาเข้า/ออกเพียงช่องเดียว ต้องการบันทึกไว้ก่อนหรือไม่?'))return}if(editing){const i=records.findIndex(x=>x.id===editing);if(i>=0)records[i]=r}else records.push(r);save();resetForm();$('month').value=r.date.slice(0,7);render()});
 window.editRecord=id=>{const r=records.find(x=>x.id===id);if(!r)return;editing=id;['date','clockIn','clockOut','breakMin','otStart','otEnd','note'].forEach(k=>$(k).value=r[k]??'');$('formTitle').textContent='แก้ไขรายการลงเวลา';$('saveBtn').textContent='บันทึกการแก้ไข';$('cancelEdit').hidden=false;window.scrollTo({top:0,behavior:'smooth'})};
 window.deleteRecord=id=>{if(!confirm('ลบรายการนี้หรือไม่?'))return;records=records.filter(r=>r.id!==id);save();render();if(editing===id)resetForm()};
