@@ -23,7 +23,7 @@ button{border:1px solid var(--line);background:#20324c;color:var(--text);padding
 <div class="card"><div class="label">ชั่วโมง OT</div><div class="value" id="otTotal">0.00</div></div>
 <div class="card"><div class="label">ชั่วโมงรวม</div><div class="value" id="allTotal">0.00</div></div>
 </section>
-<section class="panel"><h2>ลงเวลาวันนี้แบบรวดเร็ว</h2><p class="hint small">กดปุ่มเพื่อบันทึกเวลาปัจจุบันลงในรายการของวันนี้โดยอัตโนมัติ</p><div class="formactions"><button class="primary" type="button" id="clockInNow">⏱ Clock In — เข้างาน</button><button type="button" id="clockOutNow">🏁 Clock Out — เลิกงาน</button><span class="tag" id="liveClock">--:--:--</span></div></section>
+<section class="panel"><h2>ลงเวลาวันนี้แบบรวดเร็ว</h2><p class="hint small">กดปุ่มเพื่อบันทึกเวลาปัจจุบันลงในรายการของวันนี้โดยอัตโนมัติ</p><div class="formactions"><button class="primary" type="button" id="clockInNow">⏱ Clock In — เข้างาน</button><button type="button" id="clockOutNow">🏁 Clock Out — เลิกงาน</button><button type="button" id="pauseNow">☕ Start Break — เริ่มพัก</button><button type="button" id="resumeNow">▶ Resume — กลับเข้างาน</button><span class="tag" id="liveClock">--:--:--</span><span class="tag" id="breakStatus">ยังไม่ได้เริ่มพัก</span></div></section>
 <section class="panel"><h2 id="formTitle">เพิ่มรายการลงเวลา</h2>
 <form id="entryForm">
 <div class="formgrid">
@@ -53,7 +53,7 @@ function duration(a,b){if(a==null||b==null)return 0;let d=b-a;if(d<0)d+=1440;ret
 function hours(m){return (m/60).toFixed(2)}
 function calc(r){const span=duration(mins(r.clockIn),mins(r.clockOut));const work=Math.max(0,span-(Number(r.breakMin)||0));const ot=duration(mins(r.otStart),mins(r.otEnd));return {work,ot,total:work+ot}}
 function save(){localStorage.setItem(key,JSON.stringify(records))}
-function nowTime(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+function nowTime(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}\nfunction getTodayRecord(){let r=records.find(x=>x.date===today());if(!r){r={id:String(Date.now()),date:today(),clockIn:'',clockOut:'',breakMin:0,breakStart:'',otStart:'',otEnd:'',note:''};records.push(r)}return r}\nfunction pauseAction(resume){const r=getTodayRecord(),t=nowTime();if(!resume){if(r.breakStart){alert('กำลังพักอยู่แล้ว เริ่มพักเมื่อ '+r.breakStart);return}r.breakStart=t;save();render();alert('เริ่มพักเวลา '+t+' แล้วค่ะ')}else{if(!r.breakStart){alert('ยังไม่ได้กดเริ่มพักค่ะ');return}const elapsed=duration(mins(r.breakStart),mins(t));r.breakMin=(Number(r.breakMin)||0)+elapsed;r.breakStart='';save();render();alert('กลับเข้าทำงานเวลา '+t+' บันทึกเวลาพัก '+elapsed+' นาทีแล้วค่ะ')}}
 function punch(field){
  const d=today(), t=nowTime();
  let r=records.find(x=>x.date===d);
@@ -64,8 +64,8 @@ function punch(field){
  alert((field==='clockIn'?'บันทึกเวลาเข้างาน ':'บันทึกเวลาออกงาน ')+t+' เรียบร้อยแล้ว');
 }
 $('clockInNow').addEventListener('click',()=>punch('clockIn'));
-$('clockOutNow').addEventListener('click',()=>punch('clockOut'));
-function tickClock(){$('liveClock').textContent=nowTime()+':'+String(new Date().getSeconds()).padStart(2,'0')}
+$('clockOutNow').addEventListener('click',()=>punch('clockOut'));\n$('pauseNow').addEventListener('click',()=>pauseAction(false));\n$('resumeNow').addEventListener('click',()=>pauseAction(true));
+function tickClock(){$('liveClock').textContent=nowTime()+':'+String(new Date().getSeconds()).padStart(2,'0');const r=records.find(x=>x.date===today());$('breakStatus').textContent=r&&r.breakStart?'กำลังพักตั้งแต่ '+r.breakStart:'ยังไม่ได้เริ่มพัก'}
 tickClock();setInterval(tickClock,1000);
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function render(){
@@ -76,7 +76,7 @@ function render(){
  $('empty').hidden=list.length>0;
 }
 function resetForm(){editing=null;$('entryForm').reset();$('date').value=today();$('breakMin').value=0;$('formTitle').textContent='เพิ่มรายการลงเวลา';$('saveBtn').textContent='บันทึกเวลา';$('cancelEdit').hidden=true}
-$('entryForm').addEventListener('submit',e=>{e.preventDefault();const r={id:editing||String(Date.now()),date:$('date').value,clockIn:$('clockIn').value,clockOut:$('clockOut').value,breakMin:Number($('breakMin').value)||0,otStart:$('otStart').value,otEnd:$('otEnd').value,note:$('note').value.trim()};if(!r.date){alert('กรุณาเลือกวันที่');return}if((r.clockIn&&!r.clockOut)||(!r.clockIn&&r.clockOut)){if(!confirm('มีเวลาเข้า/ออกเพียงช่องเดียว ต้องการบันทึกไว้ก่อนหรือไม่?'))return}if(editing){const i=records.findIndex(x=>x.id===editing);if(i>=0)records[i]=r}else records.push(r);save();resetForm();$('month').value=r.date.slice(0,7);render()});
+$('entryForm').addEventListener('submit',e=>{e.preventDefault();const r={id:editing||String(Date.now()),date:$('date').value,clockIn:$('clockIn').value,clockOut:$('clockOut').value,breakMin:Number($('breakMin').value)||0,breakStart:'',otStart:$('otStart').value,otEnd:$('otEnd').value,note:$('note').value.trim()};if(!r.date){alert('กรุณาเลือกวันที่');return}if((r.clockIn&&!r.clockOut)||(!r.clockIn&&r.clockOut)){if(!confirm('มีเวลาเข้า/ออกเพียงช่องเดียว ต้องการบันทึกไว้ก่อนหรือไม่?'))return}if(editing){const i=records.findIndex(x=>x.id===editing);if(i>=0)records[i]=r}else records.push(r);save();resetForm();$('month').value=r.date.slice(0,7);render()});
 window.editRecord=id=>{const r=records.find(x=>x.id===id);if(!r)return;editing=id;['date','clockIn','clockOut','breakMin','otStart','otEnd','note'].forEach(k=>$(k).value=r[k]??'');$('formTitle').textContent='แก้ไขรายการลงเวลา';$('saveBtn').textContent='บันทึกการแก้ไข';$('cancelEdit').hidden=false;window.scrollTo({top:0,behavior:'smooth'})};
 window.deleteRecord=id=>{if(!confirm('ลบรายการนี้หรือไม่?'))return;records=records.filter(r=>r.id!==id);save();render();if(editing===id)resetForm()};
 $('cancelEdit').addEventListener('click',resetForm);$('month').addEventListener('change',render);
