@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101827"><title>Attendance & OT Tracker</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#142136;--line:#2b3c56;--text:#edf3fc;--muted:#9aabc2;--blue:#79aaff;--green:#42d6a0;--red:#ff788b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 85% 0,#203755,transparent 34%),var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1100px;margin:auto;padding:26px 16px 60px}.head{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap}h1{font-size:clamp(25px,4vw,36px);margin:4px 0}.muted,.hint{color:var(--muted)}.eyebrow{color:var(--blue);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+button{border:1px solid var(--line);background:#20324c;color:var(--text);padding:10px 14px;border-radius:10px;font-weight:650;cursor:pointer}button.primary{background:#316bd6;border-color:#316bd6}button.danger{background:#43212d;border-color:#693344}.actions{display:flex;gap:8px;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}.card,.panel{background:linear-gradient(145deg,#172840,#111c2e);border:1px solid var(--line);border-radius:15px}.card{padding:16px}.label{font-size:12px;color:var(--muted)}.value{font-size:25px;font-weight:800;margin-top:5px}.panel{padding:18px;margin:14px 0}.panel h2{font-size:18px;margin:0 0 14px}
+.formgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}input,textarea{width:100%;background:#0b1423;border:1px solid #3a4c67;border-radius:9px;color:var(--text);padding:11px;font:inherit}input:focus,textarea:focus{outline:2px solid #5489e8;border-color:transparent}textarea{min-height:42px;resize:vertical}.wide{grid-column:1/-1}.formactions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:790px}th,td{padding:11px 9px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}th{font-size:11px;color:var(--muted);text-transform:uppercase}td.num{text-align:right}.small{font-size:12px}.tag{display:inline-block;background:#203653;color:#b8d2ff;border-radius:20px;padding:3px 8px}
+.notice{background:#292719;border:1px solid #62532b;color:#f2dda5;padding:11px 13px;border-radius:11px;font-size:13px;margin-top:14px}
+@media(max-width:760px){.grid{grid-template-columns:repeat(2,1fr)}.formgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:430px){.formgrid{grid-template-columns:1fr}.wide{grid-column:auto}.card{padding:12px}.value{font-size:21px}}
+</style></head>
+<body><main>
+<header class="head"><div><div class="eyebrow">Personal work log</div><h1>Attendance & OT Tracker</h1><div class="muted">บันทึกเวลาเข้า–ออกงาน และล่วงเวลา</div></div><div class="actions"><button id="export">Export CSV</button><button id="clearMonth" class="danger">ล้างข้อมูลเดือนนี้</button></div></header>
+<div class="notice">ข้อมูลบันทึกไว้ในเบราว์เซอร์ของอุปกรณ์นี้เท่านั้น แนะนำ Export CSV สำรองข้อมูลเป็นประจำ และยังไม่ซิงก์ข้ามอุปกรณ์</div>
+<section class="grid">
+<div class="card"><div class="label">วันทำงานที่บันทึก (เดือนนี้)</div><div class="value" id="days">0</div></div>
+<div class="card"><div class="label">ชั่วโมงทำงานสุทธิ</div><div class="value" id="workTotal">0.00</div></div>
+<div class="card"><div class="label">ชั่วโมง OT</div><div class="value" id="otTotal">0.00</div></div>
+<div class="card"><div class="label">ชั่วโมงรวม</div><div class="value" id="allTotal">0.00</div></div>
+</section>
+<section class="panel"><h2 id="formTitle">เพิ่มรายการลงเวลา</h2>
+<form id="entryForm">
+<div class="formgrid">
+<div><label for="date">วันที่</label><input id="date" type="date" required></div>
+<div><label for="clockIn">เวลาเข้างาน</label><input id="clockIn" type="time"></div>
+<div><label for="clockOut">เวลาออกงาน</label><input id="clockOut" type="time"></div>
+<div><label for="breakMin">พัก (นาที)</label><input id="breakMin" type="number" min="0" step="5" value="60"></div>
+<div><label for="otStart">เริ่ม OT</label><input id="otStart" type="time"></div>
+<div><label for="otEnd">สิ้นสุด OT</label><input id="otEnd" type="time"></div>
+<div class="wide"><label for="note">หมายเหตุ</label><textarea id="note" placeholder="เช่น ทำงานนอกสถานที่ / ลากิจ / หมายเหตุเพิ่มเติม"></textarea></div>
+</div>
+<div class="formactions"><button class="primary" type="submit" id="saveBtn">บันทึกเวลา</button><button type="button" id="cancelEdit" hidden>ยกเลิกแก้ไข</button></div>
+</form></section>
+<section class="panel"><div class="head"><h2>ประวัติการลงเวลา</h2><div><label for="month">เลือกเดือน</label><input id="month" type="month"></div></div>
+<div class="tablewrap"><table><thead><tr><th>วันที่</th><th>เข้า</th><th>ออก</th><th>พัก</th><th>ทำงานสุทธิ</th><th>OT</th><th>รวม</th><th>หมายเหตุ</th><th>จัดการ</th></tr></thead><tbody id="rows"></tbody></table></div><p class="hint small" id="empty">ยังไม่มีข้อมูลในเดือนที่เลือก</p>
+</section>
+<p class="hint small">วิธีคำนวณ: ชั่วโมงทำงานสุทธิ = เวลาออก − เวลาเข้า − เวลาพัก ส่วน OT คำนวณจากเวลาเริ่ม OT ถึงเวลาเลิก OT (รองรับข้ามเที่ยงคืน) ระบบไม่หักเวลาพักจาก OT</p>
+</main>
+<script>
+const $=id=>document.getElementById(id), key='attendanceOtRecordsV1';
+let records=JSON.parse(localStorage.getItem(key)||'[]'), editing=null;
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const monthNow=()=>today().slice(0,7);
+$('date').value=today();$('month').value=monthNow();
+function mins(t){if(!t)return null;const [h,m]=t.split(':').map(Number);return h*60+m}
+function duration(a,b){if(a==null||b==null)return 0;let d=b-a;if(d<0)d+=1440;return Math.max(0,d)}
+function hours(m){return (m/60).toFixed(2)}
+function calc(r){const span=duration(mins(r.clockIn),mins(r.clockOut));const work=Math.max(0,span-(Number(r.breakMin)||0));const ot=duration(mins(r.otStart),mins(r.otEnd));return {work,ot,total:work+ot}}
+function save(){localStorage.setItem(key,JSON.stringify(records))}
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function render(){
+ const selected=$('month').value||monthNow(), list=records.filter(r=>r.date.startsWith(selected)).sort((a,b)=>b.date.localeCompare(a.date));
+ let w=0,o=0;list.forEach(r=>{const c=calc(r);w+=c.work;o+=c.ot});
+ $('days').textContent=list.length;$('workTotal').textContent=hours(w);$('otTotal').textContent=hours(o);$('allTotal').textContent=hours(w+o);
+ $('rows').innerHTML=list.map(r=>{const c=calc(r);const i=records.findIndex(x=>x.id===r.id);return '<tr><td>'+r.date+'</td><td>'+(r.clockIn||'—')+'</td><td>'+(r.clockOut||'—')+'</td><td class="num">'+(Number(r.breakMin)||0)+'</td><td class="num">'+hours(c.work)+'</td><td class="num">'+hours(c.ot)+'</td><td class="num"><b>'+hours(c.total)+'</b></td><td>'+escapeHtml(r.note)+'</td><td><button class="small" onclick="editRecord(\''+r.id+'\')">แก้ไข</button> <button class="small danger" onclick="deleteRecord(\''+r.id+'\')">ลบ</button></td></tr>'}).join('');
+ $('empty').hidden=list.length>0;
+}
+function resetForm(){editing=null;$('entryForm').reset();$('date').value=today();$('breakMin').value=60;$('formTitle').textContent='เพิ่มรายการลงเวลา';$('saveBtn').textContent='บันทึกเวลา';$('cancelEdit').hidden=true}
+$('entryForm').addEventListener('submit',e=>{e.preventDefault();const r={id:editing||String(Date.now()),date:$('date').value,clockIn:$('clockIn').value,clockOut:$('clockOut').value,breakMin:Number($('breakMin').value)||0,otStart:$('otStart').value,otEnd:$('otEnd').value,note:$('note').value.trim()};if(!r.date){alert('กรุณาเลือกวันที่');return}if((r.clockIn&&!r.clockOut)||(!r.clockIn&&r.clockOut)){if(!confirm('มีเวลาเข้า/ออกเพียงช่องเดียว ต้องการบันทึกไว้ก่อนหรือไม่?'))return}if(editing){const i=records.findIndex(x=>x.id===editing);if(i>=0)records[i]=r}else records.push(r);save();resetForm();$('month').value=r.date.slice(0,7);render()});
+window.editRecord=id=>{const r=records.find(x=>x.id===id);if(!r)return;editing=id;['date','clockIn','clockOut','breakMin','otStart','otEnd','note'].forEach(k=>$(k).value=r[k]??'');$('formTitle').textContent='แก้ไขรายการลงเวลา';$('saveBtn').textContent='บันทึกการแก้ไข';$('cancelEdit').hidden=false;window.scrollTo({top:0,behavior:'smooth'})};
+window.deleteRecord=id=>{if(!confirm('ลบรายการนี้หรือไม่?'))return;records=records.filter(r=>r.id!==id);save();render();if(editing===id)resetForm()};
+$('cancelEdit').addEventListener('click',resetForm);$('month').addEventListener('change',render);
+$('export').addEventListener('click',()=>{const header=['Date','Clock In','Clock Out','Break Minutes','Net Work Hours','OT Start','OT End','OT Hours','Total Hours','Note'];const data=records.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(r=>{const c=calc(r);return [r.date,r.clockIn,r.clockOut,r.breakMin,hours(c.work),r.otStart,r.otEnd,hours(c.ot),hours(c.total),r.note]});const csv='\uFEFF'+[header,...data].map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='attendance-ot-'+monthNow()+'.csv';a.click();URL.revokeObjectURL(url)});
+$('clearMonth').addEventListener('click',()=>{const m=$('month').value||monthNow();if(!confirm('ลบข้อมูลทั้งหมดของเดือน '+m+' หรือไม่?'))return;records=records.filter(r=>!r.date.startsWith(m));save();render();resetForm()});
+render();
+</script></body></html>
